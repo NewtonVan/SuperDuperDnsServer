@@ -68,10 +68,12 @@ void Server::init(int &port)
     struct addrinfo *servInfo;
     char str_port[1<<5];
     unsigned value= 1;
-    if (NULL== itoa(port, str_port, 10)){
-        fprintf(stderr, "damn it, convert failure\n");
-        exit(2);
-    }
+
+//    if (NULL== itoa(port, str_port, 10)){
+//        fprintf(stderr, "damn it, convert failure\n");
+//        exit(2);
+//    } failed because linux doesn't support itoa
+    sprintf(str_port, "%d", port);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family= AF_INET;
     hints.ai_socktype= SOCK_DGRAM;

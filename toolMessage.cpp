@@ -31,7 +31,7 @@ void ToolMessage::decodeTool(const char *buff, const int size)
     decode_header(buff);
     decode_questions(buff);
     // use o_buff, because there exist name pointer problem
-    decode_answers(o_buff);
+    decode_answers(buff, o_buff);
 }
 
 std::string ToolMessage::to_string()

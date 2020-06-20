@@ -22,7 +22,7 @@ namespace dns{
         /*functions*/
         void init(const std::string&);
         void configure(const std::string&);
-        void process(const Query &, Response &);
+//        void process(const Query &, Response &);
         bool process(const Query &, Response &, const char *, unsigned int, char *const);
     protected:
         struct TicToc{
