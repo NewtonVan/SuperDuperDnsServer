@@ -8,6 +8,7 @@
 #include <iostream>
 #include "query.h"
 #include "response.h"
+#include "toolMessage.h"
 
 namespace dns{
     /*
@@ -20,17 +21,33 @@ namespace dns{
 
         /*functions*/
         void init(const std::string&);
-        void process(const Query&, Response&);
+        void configure(const std::string&);
+        void process(const Query &, Response &);
+        bool process(const Query &, Response &, const char *, unsigned int, char *const);
     protected:
+        struct TicToc{
+            long long tic;  // unit is clock
+            long long TTL;  // unit is second
+            long long toc;  // unit is clock
+
+            TicToc() : tic(0), TTL(0), toc(0){}
+            void UpdateTic(long long ntic, long long nTTL);
+        };
         /*
          * store the rr information
          */
         struct Host{
             std::string ipAddr;
             std::string name;
+            TicToc tictoc;
         };
 
         std::vector<Host> m_hosts;
+        std::vector<Host> m_UpperDnsServer;
+        int p_socketfd; // p respresent proxy
+
+        void AddCache(char *buff, int lth);
+        void UpdateCache(void);
     };
 }
 #endif //SUPERDUPERSERVER_RESOLVER_H

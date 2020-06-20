@@ -2,13 +2,14 @@
 // Created by Newton on 2020/6/6.
 //
 
-#include <sstream>
+
 #include "response.h"
 
 using namespace dns;
 /*
  * format the answer to response dns datagram
  * integrate the encode function in message class
+ * remember that buff is just a parameter and not a reference here
  */
 int Response::encode(char *buff)
 {

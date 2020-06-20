@@ -14,8 +14,10 @@ Server::Server()
 {
 #ifdef _WIN32
     m_resolver.init(".\\server.cache");
+    m_resolver.configure(".\\upperproxy.confg");
 #else
     m_resolver.init("./server.cache");
+    m_resolver.configure("./upperproxy.confg");
 #endif
 }
 
@@ -119,23 +121,25 @@ void Server::init(int &port)
  */
 void Server::run()
 {
-    char buf[512];
+    char rbuf[MAX_UDP_LTH], sbuf[MAX_UDP_LTH];
     struct sockaddr_in clientAddr;
     socklen_t len= sizeof(struct sockaddr_in);
 
-    while (1){
-        int lth= (int)recvfrom(m_socketfd, buf, sizeof(buf), 0, (struct sockaddr*)&clientAddr, &len);
+    while (true){
+        int lth= (int)recvfrom(m_socketfd, rbuf, sizeof(rbuf), 0, (struct sockaddr*)&clientAddr, &len);
         if (lth <= 0){
             continue;
         }
-        m_query.decode(buf, lth);
+        m_query.decode(rbuf, lth);
         std::cout<<m_query.to_string();
 
-        m_resolver.process(m_query, m_response);
-        memset(buf, 0, sizeof(buf));
-        lth= m_response.encode(buf);
-        std::cout<<m_response.to_string();
-        sendto(m_socketfd, buf, lth, 0, (struct sockaddr*)&clientAddr, len);
+        if(m_resolver.process(m_query, m_response, rbuf, lth, sbuf)){   // cache hit
+            memset(sbuf, 0, sizeof(sbuf));
+            lth= m_response.encode(sbuf);
+            std::cout<<m_response.to_string();
+        }
+
+        sendto(m_socketfd, sbuf, lth, 0, (struct sockaddr*)&clientAddr, len);
 
         std::cout<<std::endl;
     }

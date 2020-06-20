@@ -5,8 +5,8 @@
 #ifndef SUPERDUPERSERVER_MESSAGE_H
 #define SUPERDUPERSERVER_MESSAGE_H
 
-#include <iostream>
-#include <vector>
+
+#include "SuperDuperLib.h"
 
 namespace dns{
     class Message{
@@ -133,7 +133,7 @@ namespace dns{
             uint16_t rClass;
             uint32_t rTTL;
             uint16_t rdLength;
-            char rData[64];
+            char rData[64]; // bigger than any data size
             char rIp[64];  // this is setted to be human readable term
         };
 
@@ -163,33 +163,38 @@ namespace dns{
         void encode_answers(char *&);
         void decode_header(const char*&);
         void decode_questions(const char*&);
+        void decode_answers(const char*&buff, const char*& obuf);
     public:
         Message(){};
         virtual ~Message() {};
 
         /*functions*/
         // get header's information
-        unsigned getID() const
+        unsigned int getID() const
         {
             return m_id;
         }
-        unsigned getOpcode() const
+        unsigned int getOpcode() const
         {
             return m_opcode;
         }
-        unsigned getQdCount() const
+        unsigned int getRcode() const
+        {
+            return m_rcode;
+        }
+        unsigned int getQdCount() const
         {
             return m_qdCount;
         }
-        unsigned getAnCount() const
+        unsigned int getAnCount() const
         {
             return m_anCount;
         }
-        unsigned getNsCount() const
+        unsigned int getNsCount() const
         {
             return m_nsCount;
         }
-        unsigned getArCount() const
+        unsigned int getArCount() const
         {
             return m_arCount;
         }

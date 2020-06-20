@@ -5,7 +5,6 @@
 #ifndef SUPERDUPERSERVER_QUERY_H
 #define SUPERDUPERSERVER_QUERY_H
 
-#include <iostream>
 #include "message.h"
 
 namespace dns{

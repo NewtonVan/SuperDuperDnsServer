@@ -35,6 +35,7 @@ void encode_address(char *addr, char *&buff)
  * push formative header part assist into header structure
  * push the formative header structure into the 'buff', and
  * set the pointer to the byte after the end
+ * header is a temporary variable, it doesn't change anything
  */
 void Message::encode_header(char *&buff)
 {
@@ -49,12 +50,18 @@ void Message::encode_header(char *&buff)
     header.hFlags += (m_ra << 7);
     header.hFlags += m_rcode;
 
-    header.hId = htons(header.hId);
-    header.hFlags = htons(header.hFlags);
     header.queryCount = m_qdCount;
     header.ansCount = m_anCount;
     header.authCount = m_nsCount;
     header.addiCount = m_arCount;
+
+    // convert the header part to network byte order
+    header.hId = htons(header.hId);
+    header.hFlags = htons(header.hFlags);
+    header.queryCount= htons(header.queryCount);
+    header.ansCount= htons(header.ansCount);
+    header.authCount= htons(header.authCount);
+    header.addiCount= htons(header.addiCount);
 
     memcpy(buff, &header, sizeof(MHeader));
     buff += sizeof(MHeader);
@@ -71,6 +78,7 @@ void Message::encode_questions(char *&buff)
         MQuestion question= m_questions[i];
         encode_address(question.qName, buff);
 
+        // convert qtype and qclass to network byte order
         uint16_t nQType = htons(question.qType);
         memcpy(buff, &nQType, sz16);
         buff+= sz16;
@@ -101,7 +109,7 @@ void Message::encode_answers(char *&buff)
         memcpy(buff, &nRClass, sz16);
         buff+= sz16;
 
-        uint32_t nTTL= htons(resource.rTTL);
+        uint32_t nTTL= htonl(resource.rTTL);
         memcpy(buff, &nTTL, sz32);
         buff+= sz32;
 
@@ -112,6 +120,11 @@ void Message::encode_answers(char *&buff)
         if (MT_A == resource.rType){
             memcpy(buff, resource.rData, sz32);
             buff+= sz32;
+        }
+        else if (MT_AAAA == resource.rType){
+            // not quite sure about in6_addr here
+            memcpy(buff, resource.rData, sizeof(struct in6_addr));
+            buff+= sizeof(struct in6_addr);
         }
     }
 }
@@ -127,6 +140,7 @@ void Message::decode_header(const char *&buff)
     MHeader header;
     memcpy(&header, buff, sizeof(MHeader));
 
+    // convert network byte order to host byte order
     header.hId= ntohs(header.hId);
     header.hFlags= ntohs(header.hFlags);
     header.queryCount= ntohs(header.queryCount);
@@ -183,4 +197,80 @@ void Message::decode_questions(const char *&buff)
 
         m_questions.push_back(question);
     }
+}
+
+
+/*
+ * TODO
+ * handle the name server problem
+ */
+void Message::decode_answers(const char *&buff, const char *&obuf)
+{
+    m_answers.clear();
+    size_t sz16= sizeof(uint16_t);
+    size_t sz32= sizeof(uint32_t);
+
+    for (int i= 0; i< m_anCount; ++i){
+        MResource resource= {0};
+        while (1){
+            unsigned int len= *buff++;
+
+            // handle the name pointer
+            if ((0xC0 & len) == 0xC0){ // name pointer
+                unsigned int pos= (unsigned char)(*buff++);
+                const char *nmAddr= obuf+pos;
+
+                while (1){
+                    unsigned int nmL= (unsigned char)(*nmAddr++);
+                    if (0== len){
+                        break;
+                    }
+                    if (0!= strlen(resource.rName)){
+                        strcat(resource.rName, ".");
+                    }
+                    memcpy(resource.rName+strlen(resource.rName), nmAddr, nmL);
+                    nmAddr+= nmL;
+                }
+
+                break;
+            }
+
+            if (0== len){
+                break;
+            }
+            if (0!= strlen(resource.rName)){
+                strcat(resource.rName, ".");
+            }
+
+            memcpy(resource.rName+strlen(resource.rName), buff, len);
+            buff+= len;
+        }
+        resource.rType= ntohs(*((uint16_t*)buff));
+        buff+= sz16;
+
+        resource.rClass= ntohs(*((uint16_t*)buff));
+        buff+= sz16;
+
+        resource.rTTL= ntohs(*((uint32_t*)buff));
+        buff+= sz32;
+
+        resource.rdLength= ntohs(*((uint16_t*)buff));
+        buff+= sz16;
+
+        if (MT_A == resource.rType){
+            // resource.rData= *((uint32_t*)buff);
+            memcpy(resource.rData, buff, sz32);
+            inet_ntop(AF_INET, resource.rData, resource.rIp, sz32);
+            buff+= sz32;
+        }
+        else if (MT_AAAA== resource.rType){
+            size_t in6_lth= sizeof(struct in6_addr);
+            memcpy(resource.rData, buff, in6_lth);
+            inet_ntop(AF_INET6, resource.rData, resource.rIp, in6_lth);
+            buff+= in6_lth;
+        }
+
+        m_answers.push_back(resource);
+    }
+
 }

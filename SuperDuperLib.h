@@ -38,5 +38,11 @@
 #endif
 
 #include <cstring>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <ctime>
 
+#define MAX_UDP_LTH 512
 #endif //SUPERDUPERSERVER_SUPERDUPERLIB_H

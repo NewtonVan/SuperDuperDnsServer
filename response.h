@@ -5,7 +5,6 @@
 #ifndef SUPERDUPERSERVER_RESPONSE_H
 #define SUPERDUPERSERVER_RESPONSE_H
 
-#include <iostream>
 #include "message.h"
 #include "query.h"
 

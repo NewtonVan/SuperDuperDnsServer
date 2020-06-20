@@ -3,12 +3,12 @@
 //
 
 #include "query.h"
-#include <sstream>
 
 using namespace dns;
 
 /*
  * format the dns query datagram
+ * attention that buf is just a parameter not a reference here
  */
 void Query::decode(const char *buf, const int size)
 {
