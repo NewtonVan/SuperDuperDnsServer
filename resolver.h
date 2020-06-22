@@ -23,15 +23,15 @@ namespace dns{
         void init(const std::string&);
         void configure(const std::string&);
 //        void process(const Query &, Response &);
-        bool process(const Query &, Response &, const char *, unsigned int, char *const);
+        bool process(const Query &, Response &, const char *, int &, char *const);
     protected:
         struct TicToc{
-            long long tic;  // unit is clock
-            long long TTL;  // unit is second
-            long long toc;  // unit is clock
+            unsigned long long tic;  // unit is clock
+            unsigned long long TTL;  // unit is second
+            unsigned long long toc;  // unit is clock
 
             TicToc() : tic(0), TTL(0), toc(0){}
-            void UpdateTic(long long ntic, long long nTTL);
+            void UpdateTic(unsigned long long ntic, unsigned long long nTTL);
         };
         /*
          * store the rr information

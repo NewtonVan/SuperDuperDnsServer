@@ -29,13 +29,15 @@ int Response::encode(char *buff)
 std::string Response::to_string()
 {
     std::stringstream stream;
+    char type[10]={0};
     stream<<"Response:"<<std::endl;
     stream<<"Status:"<<m_rcode<<std::endl;
 
     for (std::vector<MResource>::iterator iter= m_answers.begin();
     m_answers.end()!= iter; ++iter){
         MResource resource= *iter;
-        stream<<resource.rIp<<" "<<resource.rType<<std::endl;
+        get_type(resource.rType, type);
+        stream<<resource.rIp<<"\t"<<type<<std::endl;
     }
 
     return stream.str();

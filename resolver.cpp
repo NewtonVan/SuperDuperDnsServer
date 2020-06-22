@@ -16,7 +16,7 @@ using namespace std;
 void Resolver::init(const std::string &filename)
 {
     ifstream fstrm(filename.c_str());
-    long long now= clock();
+    unsigned long long now= clock();
     char hostStr[256];
 
     while (fstrm.getline(hostStr, sizeof(hostStr))){
@@ -30,9 +30,7 @@ void Resolver::init(const std::string &filename)
     }
 }
 
-/*
- * TODO compelete configure function
- */
+
 void Resolver::configure(const std::string &filename)
 {
     ifstream fstrm(filename.c_str());
@@ -50,7 +48,7 @@ void Resolver::configure(const std::string &filename)
 }
 
 
-void Resolver::TicToc::UpdateTic(long long ntic, long long nTTL)
+void Resolver::TicToc::UpdateTic(unsigned long long ntic, unsigned long long nTTL)
 {
     tic= ntic;
     TTL= nTTL;
@@ -73,7 +71,9 @@ void Resolver::UpdateCache(void)
 void Resolver::AddCache(char *buff, int lth)
 {
     ToolMessage tool;
-    long long now= clock();
+    unsigned long long now= clock();
+    // TODO check segment fault
+//    printf("segment fault test point 3\n");
     tool.decodeTool(buff, lth);
 
     for (vector<Message::MResource>::iterator tIter= tool.m_answers.begin();
@@ -108,7 +108,7 @@ void Resolver::AddCache(char *buff, int lth)
  * achieve the proxy function
  * achieve the cache function
  */
-bool Resolver::process(const dns::Query &query, dns::Response &response, const char *rbuf, unsigned int bufLth, char *const sbuf)
+bool Resolver::process(const dns::Query &query, dns::Response &response, const char *rbuf, int &bufLth, char *const sbuf)
 {
     response.m_answers.clear();
     response.m_questions.clear();
@@ -166,6 +166,7 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
         if (!hitd){
             break;
         }
+        response.m_questions.push_back(question);
     }
 
     if (!hitd){
@@ -176,14 +177,14 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
         struct addrinfo hints, *serverInfo, *ptr;
         struct timeval tBound;
         // ToolMessage proxyQuery;
-        int rv, numBytes, sndlth, t_sec, t_usec;
+        int rv, numBytes, t_sec, t_usec;
 
         memset(&hints, 0, sizeof(hints));
         hints.ai_family= AF_UNSPEC;
         hints.ai_socktype= SOCK_DGRAM;
 
-        t_sec= 5;
-        t_usec= 0;
+        t_sec= 0;
+        t_usec= 500000;
         tBound.tv_sec= t_sec;
         tBound.tv_usec= t_usec;
 
@@ -191,7 +192,7 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
              m_UpperDnsServer.end()!= uIter; ++uIter){
             Host proxyServer= *uIter;
             struct sockaddr serverAddr;
-            unsigned int addrLen= sizeof(serverAddr);
+            socklen_t addrLen= sizeof(serverAddr);
 
             // prepare for make a query to upper proxy dns server
             if (0!= (rv= getaddrinfo(proxyServer.ipAddr.c_str(), "53", &hints, &serverInfo))){
@@ -215,7 +216,7 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
             // quit if recvfrom functions meet with a timeout
             setsockopt(p_socketfd, SOL_SOCKET, SO_RCVTIMEO, &tBound, sizeof(tBound));
 
-            if ((numBytes= sendto(p_socketfd, u_sbuf, sndlth, 0, ptr->ai_addr, ptr->ai_addrlen))< 0){
+            if ((numBytes= sendto(p_socketfd, u_sbuf, bufLth, 0, ptr->ai_addr, ptr->ai_addrlen))< 0){
                 perror("talker: sendto");
                 exit(2);
             }
@@ -238,8 +239,13 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
                 memset(sbuf, 0, MAX_UDP_LTH);
                 memcpy(sbuf, u_rbuf, numBytes);
 
+                // TODO check segment fault
+//                printf("segment fault test point 1\n");
                 AddCache(u_rbuf, numBytes);
+                // TODO check segment fault
+//                printf("segment fault test point 2\n");
                 UpdateCache();
+                bufLth= numBytes;
                 return false; //cache missed
             }
         }

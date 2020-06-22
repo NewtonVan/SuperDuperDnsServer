@@ -30,8 +30,12 @@ void ToolMessage::decodeTool(const char *buff, const int size)
     const char *o_buff= buff;
     decode_header(buff);
     decode_questions(buff);
+    // TODO check segment fault
+//    printf("segment fault test point 4\n");
     // use o_buff, because there exist name pointer problem
     decode_answers(buff, o_buff);
+    // TODO check segment fault
+//    printf("segment fault test point 5\n");
 }
 
 std::string ToolMessage::to_string()

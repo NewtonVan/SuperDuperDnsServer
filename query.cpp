@@ -25,11 +25,13 @@ void Query::decode(const char *buf, const int size)
 std::string Query::to_string()
 {
     std::stringstream strm;
+    char type[10]={0};
     strm<<"Query:"<<std::endl;
     for (std::vector<MQuestion>::iterator iter= m_questions.begin();
     m_questions.end() != iter; ++iter){
         MQuestion question= *iter;
-        strm<<question.qName<<" "<<question.qType<<std::endl;
+        get_type(question.qType, type);
+        strm<<question.qName<<"\t"<<type<<std::endl;
     }
 
     return strm.str();

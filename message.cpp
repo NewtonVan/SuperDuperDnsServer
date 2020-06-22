@@ -126,6 +126,10 @@ void Message::encode_answers(char *&buff)
             memcpy(buff, resource.rData, sizeof(struct in6_addr));
             buff+= sizeof(struct in6_addr);
         }
+        else{
+            memcpy(buff, resource.rData, resource.rdLength);
+            buff+= resource.rdLength;
+        }
     }
 }
 
@@ -168,6 +172,7 @@ void Message::decode_header(const char *&buff)
 }
 
 /*
+ * TODO maybe handle the name server pointer problem
  * transfer the query data to formative data
  * push the formative data into m_questions which record the questions
  * set the pointer to the byte after the end
@@ -213,16 +218,16 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
     for (int i= 0; i< m_anCount; ++i){
         MResource resource= {0};
         while (1){
-            unsigned int len= *buff++;
+            unsigned int len= (unsigned char)(*buff++);
 
             // handle the name pointer
-            if ((0xC0 & len) == 0xC0){ // name pointer
+            if (0xC0 == len){ // name pointer
                 unsigned int pos= (unsigned char)(*buff++);
                 const char *nmAddr= obuf+pos;
 
                 while (1){
                     unsigned int nmL= (unsigned char)(*nmAddr++);
-                    if (0== len){
+                    if (0== nmL){
                         break;
                     }
                     if (0!= strlen(resource.rName)){
@@ -245,13 +250,15 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
             memcpy(resource.rName+strlen(resource.rName), buff, len);
             buff+= len;
         }
+        // TODO check segment fault
+//        printf("segment fault test point 6\n");
         resource.rType= ntohs(*((uint16_t*)buff));
         buff+= sz16;
 
         resource.rClass= ntohs(*((uint16_t*)buff));
         buff+= sz16;
 
-        resource.rTTL= ntohs(*((uint32_t*)buff));
+        resource.rTTL= ntohl(*((uint32_t*)buff));
         buff+= sz32;
 
         resource.rdLength= ntohs(*((uint16_t*)buff));
@@ -269,8 +276,71 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
             inet_ntop(AF_INET6, resource.rData, resource.rIp, in6_lth);
             buff+= in6_lth;
         }
+        else{
+            size_t dlth= (size_t)resource.rdLength;
+            memcpy(resource.rData, buff, dlth);
+            buff+= dlth;
+            memset(resource.rIp, 0, sizeof(resource.rIp));
+        }
 
         m_answers.push_back(resource);
     }
 
+}
+
+void Message::get_type(unsigned int type, char *result)
+{
+    switch(type){
+        case MT_A:
+            strncpy(result, "A", 1);
+            break;
+        case MT_NS:
+            strncpy(result, "NS", 2);
+            break;
+        case MT_CNAME:
+            strncpy(result, "CNAME", 5);
+            break;
+        case MT_SOA:
+            strncpy(result, "SOA", 3);
+            break;
+        case MT_WKS:
+            strncpy(result, "WKS", 3);
+            break;
+        case MT_PTR:
+            strncpy(result, "PTR", 3);
+            break;
+        case MT_HINFO:
+            strncpy(result, "HINFO", 5);
+            break;
+        case MT_MINFO:
+            strncpy(result, "MINFO", 5);
+            break;
+        case MT_MX:
+            strncpy(result, "MX", 2);
+            break;
+        case MT_TXT:
+            strncpy(result, "TXT", 3);
+            break;
+        case MT_AAAA:
+            strncpy(result, "AAAA", 4);
+            break;
+        case MT_UINFO:
+            strncpy(result, "UINFO", 5);
+            break;
+        case MT_UID:
+            strncpy(result, "UID", 3);
+            break;
+        case MT_GID:
+            strncpy(result, "GID", 3);
+            break;
+        case MT_AXFR:
+            strncpy(result, "AXFR", 4);
+            break;
+        case MT_ANY:
+            strncpy(result, "ANY", 3);
+            break;
+        default:
+            memset(result, 0, 10);
+            break;
+    }
 }

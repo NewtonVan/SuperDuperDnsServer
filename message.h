@@ -7,8 +7,8 @@
 
 
 #include "SuperDuperLib.h"
-
 namespace dns{
+
     class Message{
         friend class Resolver;
 
@@ -164,6 +164,7 @@ namespace dns{
         void decode_header(const char*&);
         void decode_questions(const char*&);
         void decode_answers(const char*&buff, const char*& obuf);
+        void get_type(unsigned int type, char *result);
     public:
         Message(){};
         virtual ~Message() {};
