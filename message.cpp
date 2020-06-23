@@ -267,13 +267,13 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
         if (MT_A == resource.rType){
             // resource.rData= *((uint32_t*)buff);
             memcpy(resource.rData, buff, sz32);
-            inet_ntop(AF_INET, resource.rData, resource.rIp, sz32);
+            inet_ntop(AF_INET, resource.rData, resource.rIp, INET_ADDRSTRLEN);
             buff+= sz32;
         }
         else if (MT_AAAA== resource.rType){
             size_t in6_lth= sizeof(struct in6_addr);
             memcpy(resource.rData, buff, in6_lth);
-            inet_ntop(AF_INET6, resource.rData, resource.rIp, in6_lth);
+            inet_ntop(AF_INET6, resource.rData, resource.rIp, INET6_ADDRSTRLEN);
             buff+= in6_lth;
         }
         else{

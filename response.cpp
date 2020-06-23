@@ -30,15 +30,15 @@ std::string Response::to_string()
 {
     std::stringstream stream;
     char type[10]={0};
-    stream<<"Response:"<<std::endl;
+    stream<<"\nResponse:"<<std::endl;
     stream<<"Status:"<<m_rcode<<std::endl;
 
     for (std::vector<MResource>::iterator iter= m_answers.begin();
     m_answers.end()!= iter; ++iter){
         MResource resource= *iter;
         get_type(resource.rType, type);
-        stream<<resource.rIp<<"\t"<<type<<std::endl;
+        stream<<resource.rIp<<"\r\t\t\t\t"<<type<<std::endl;
     }
-
+    stream<<"\n";
     return stream.str();
 }

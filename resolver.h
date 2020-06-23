@@ -23,6 +23,7 @@ namespace dns{
         void init(const std::string&);
         void configure(const std::string&);
 //        void process(const Query &, Response &);
+        void getLog(const std::string logNm);
         bool process(const Query &, Response &, const char *, int &, char *const);
     protected:
         struct TicToc{
@@ -45,6 +46,9 @@ namespace dns{
         std::vector<Host> m_hosts;
         std::vector<Host> m_UpperDnsServer;
         int p_socketfd; // p respresent proxy
+        std::ofstream logFile;
+        std::string logData;
+        std:: string logName;
 
         void AddCache(char *buff, int lth);
         void UpdateCache(void);

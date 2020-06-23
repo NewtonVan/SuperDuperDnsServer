@@ -18,12 +18,16 @@ namespace dns{
 
         /*functions*/
         void init(int&);
-        void run();
+        void run(const std::string logNm);
     private:
         int m_socketfd;
         Query m_query;
         Response m_response;
         Resolver m_resolver;
+        // TODO add log function
+        std::ofstream logFile;
+        std::string logData;
+//        std::stringstream logTool;
     };
 }
 #endif //SUPERDUPERSERVER_SERVER_H

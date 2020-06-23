@@ -19,6 +19,7 @@ namespace dns {
         Application() : m_server() {};
         virtual ~Application(){};
         /*function*/
+        void ui(const std::string flname);
         void run();
     };
 }

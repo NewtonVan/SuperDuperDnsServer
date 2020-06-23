@@ -22,41 +22,6 @@ Server::Server()
 }
 
 /*
- * old fashioned
- void Server::init(int &port) {
-    struct sockaddr_in servAddr;
-    memset(&servAddr, 0, sizeof(servAddr));
-    //protocol domain
-    servAddr.sin_family = AF_INET;
-    //default ip
-    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    //port
-    servAddr.sin_port = htons(port);
-    //create socket
-    if ((m_socketfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        printf("create socket error: %s(errno: %d)\n",strerror(errno),errno);
-        return;
-    }
-    unsigned value = 1;
-    setsockopt(m_socketfd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value));
-    //bind socket to port
-    if (bind(m_socketfd, (struct sockaddr *)&servAddr, sizeof(servAddr))) {
-        printf("bind socket error: %s(errno: %d)\n",strerror(errno),errno);
-        return;
-    }
-    //dynamically allocating a port
-    if (port == 0) {
-        socklen_t namelen = sizeof(servAddr);
-        if (getsockname(m_socketfd, (struct sockaddr *)&servAddr, &namelen) == -1) {
-            printf("getsockname error: %s(errno: %d)\n",strerror(errno),errno);
-            return;
-        }
-        port = ntohs(servAddr.sin_port);
-    }
-    std::cout<<"server running on port:"<<port<<std::endl;
-}
- */
-/*
  * init the server
  * create socket used for dns proxy server
  * set it to listening mode
@@ -69,10 +34,6 @@ void Server::init(int &port)
     char str_port[1<<5];
     unsigned value= 1;
 
-//    if (NULL== itoa(port, str_port, 10)){
-//        fprintf(stderr, "damn it, convert failure\n");
-//        exit(2);
-//    } failed because linux doesn't support itoa
     sprintf(str_port, "%d", port);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family= AF_INET;
@@ -89,9 +50,7 @@ void Server::init(int &port)
         exit(1);
     }
 
-    /*
-     * this part still have some fxxking problem, I'm not quite sure whether it can work well
-     */
+
 #ifdef _WIN32
     setsockopt(m_socketfd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char *>(&value), sizeof(value));
 #else
@@ -121,24 +80,64 @@ void Server::init(int &port)
  * process the datagram
  * solve the datagram
  */
-void Server::run()
+void Server::run(const std::string logNm)
 {
     char rbuf[MAX_UDP_LTH], sbuf[MAX_UDP_LTH];
-    struct sockaddr_in clientAddr;
+    // TODO information function here, so make some change, if something wrong, recover sockaddr to sockaddr_in
+    struct sockaddr clientAddr;
+    char p_clientAddr[INET6_ADDRSTRLEN];
     socklen_t len= sizeof(struct sockaddr_in);
+
+    // TODO log function
+//    logFile.open(logNm.c_str(), std::ios::app);
+    m_resolver.getLog(logNm);
 
     while (true){
         int lth= (int)recvfrom(m_socketfd, rbuf, sizeof(rbuf), 0, (struct sockaddr*)&clientAddr, &len);
         if (lth <= 0){
             continue;
         }
+
+
+        logFile.open(logNm.c_str(), std::ios::app);
+        std::cout<<"******************************************"<<std::endl;
+        logFile<<"******************************************"<<std::endl;
+        // TODO information function show received from where
+        if (AF_INET== clientAddr.sa_family){
+            struct sockaddr_in *v4CltAddr= (struct sockaddr_in*)&clientAddr;
+            inet_ntop(AF_INET, &(v4CltAddr->sin_addr), p_clientAddr, INET_ADDRSTRLEN);
+            std::cout<<"Received from: "<<p_clientAddr<<std::endl;
+            logFile<<"Received form: "<<p_clientAddr<<std::endl;
+        }
+        else{
+            struct sockaddr_in6 *v6CltAddr= (struct sockaddr_in6*)&clientAddr;
+            inet_ntop(AF_INET6, &(v6CltAddr->sin6_addr), p_clientAddr, INET6_ADDRSTRLEN);
+            std::cout<<"Received from: "<<p_clientAddr<<std::endl;
+            logFile<<"Received form: "<<p_clientAddr<<std::endl;
+        }
+
         m_query.decode(rbuf, lth);
-        std::cout<<m_query.to_string();
+        logData= m_query.to_string();
+        std::cout<<logData;
+        logFile<<logData;
+
+        logFile.close();
 
         if(m_resolver.process(m_query, m_response, rbuf, lth, sbuf)){   // cache hit
             memset(sbuf, 0, sizeof(sbuf));
             lth= m_response.encode(sbuf);
-            std::cout<<m_response.to_string();
+            logData= m_response.to_string();
+
+            logFile.open(logNm.c_str(), std::ios::app);
+
+            std::cout<<logData;
+            logFile<<logData;
+            std::cout<<"Cache was hit"<<std::endl;
+            std::cout<<"******************************************\n\n"<<std::endl;
+            logFile<<"Cache was hit"<<std::endl;
+            logFile<<"******************************************\n\n"<<std::endl;
+
+            logFile.close();
         }
 
         sendto(m_socketfd, sbuf, lth, 0, (struct sockaddr*)&clientAddr, len);

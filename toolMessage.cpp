@@ -41,11 +41,16 @@ void ToolMessage::decodeTool(const char *buff, const int size)
 std::string ToolMessage::to_string()
 {
     std::stringstream sstrm;
-    sstrm<<"ToolMessage:"<<std::endl;
+    char type[10]={0};
+    sstrm<<"\nResponse:"<<std::endl;
+    sstrm<<"Status:"<<m_rcode<<std::endl;
 
-    for (std::vector<MQuestion>::iterator iter= m_questions.begin();
-         m_questions.end() != iter; ++iter){
-        MQuestion question= *iter;
-        sstrm<<question.qName<<" "<<question.qType<<std::endl;
+    for (std::vector<MResource>::iterator iter= m_answers.begin();
+         m_answers.end()!= iter; ++iter){
+        MResource resource= *iter;
+        get_type(resource.rType, type);
+        sstrm<<resource.rIp<<"\r\t\t\t\t"<<type<<std::endl;
     }
+    sstrm<<"\n";
+    return sstrm.str();
 }
