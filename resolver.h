@@ -43,13 +43,19 @@ namespace dns{
             int af;
             TicToc tictoc;
         };
+/*        struct Alias{
+            std::string name;
+            std::string cname;
+            TicToc tictoc;
+        };*/
 
         std::vector<Host> m_hosts;
         std::vector<Host> m_UpperDnsServer;
+//        std::vector<Alias> m_alias;
         int p_socketfd; // p respresent proxy
         std::ofstream logFile;
         std::string logData;
-        std:: string logName;
+        std::string logName;
 
         void AddCache(char *buff, int lth);
         void UpdateCache(void);

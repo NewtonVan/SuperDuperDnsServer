@@ -41,7 +41,7 @@ void ToolMessage::decodeTool(const char *buff, const int size)
 std::string ToolMessage::to_string()
 {
     std::stringstream sstrm;
-    char type[10]={0};
+    char type[16]={0};
     sstrm<<"\nResponse:"<<std::endl;
     sstrm<<"Status:"<<m_rcode<<std::endl;
 
@@ -50,6 +50,7 @@ std::string ToolMessage::to_string()
         MResource resource= *iter;
         get_type(resource.rType, type);
         sstrm<<resource.rIp<<"\t\t"<<type<<std::endl;
+        memset(type, 0, sizeof(type));
     }
     sstrm<<"\n";
     return sstrm.str();

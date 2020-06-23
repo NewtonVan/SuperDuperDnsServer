@@ -28,6 +28,7 @@ void Resolver::init(const std::string &filename)
         host.tictoc.UpdateTic(now, 10);
         m_hosts.push_back(host);
     }
+    fstrm.close();
 }
 
 
@@ -45,6 +46,7 @@ void Resolver::configure(const std::string &filename)
         sstrm>>proxyServer.name;
         m_UpperDnsServer.push_back(proxyServer);
     }
+    fstrm.close();
 }
 
 void Resolver::getLog(const std::string logNm)
@@ -93,6 +95,7 @@ void Resolver::AddCache(char *buff, int lth)
             newCache.tictoc.UpdateTic(now, tIter->rTTL);
             newCache.af= Message::MT_A== tIter->rType ? AF_INET : AF_INET6;
 
+
             for (vector<Host>::iterator hIter= m_hosts.begin();
             m_hosts.end()!= hIter; ++hIter){
                 if (hIter->ipAddr== newCache.ipAddr && hIter->name== newCache.name
@@ -108,7 +111,11 @@ void Resolver::AddCache(char *buff, int lth)
                 m_hosts.push_back(newCache);
             }
         }
+/*        else if (Message::MT_CNAME== tIter->rType){
+            Alias newAlias;
+        }*/
     }
+
 }
 
 /*
@@ -140,7 +147,7 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
                 strcpy(resource.rName, question.qName);
                 resource.rType= question.qType;
                 resource.rClass= question.qClass;
-                resource.rTTL= 10;
+                resource.rTTL= host.tictoc.TTL;
                 resource.rdLength= sizeof(uint32_t);
                 memcpy(resource.rIp, host.ipAddr.c_str(), host.ipAddr.size());
 
@@ -159,14 +166,14 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
                 strcpy(resource.rName, question.qName);
                 resource.rType= question.qType;
                 resource.rClass= question.qClass;
-                resource.rTTL= 10;
+                resource.rTTL= host.tictoc.TTL;
                 resource.rdLength= sizeof(struct in6_addr);
                 memcpy(resource.rIp, host.ipAddr.c_str(), host.ipAddr.size());
 
                 struct sockaddr_in6 adr_inet6;
                 memset(&adr_inet6, 0, sizeof(adr_inet6));
                 inet_pton(AF_INET6, host.ipAddr.c_str(), &(adr_inet6.sin6_addr));
-                memcpy(resource.rData, adr_inet6.sin6_addr.s6_addr, sizeof(struct in6_addr));
+                memcpy(resource.rData, &(adr_inet6.sin6_addr.s6_addr), sizeof(struct in6_addr));
 
                 response.m_answers.push_back(resource);
                 hitd=1;

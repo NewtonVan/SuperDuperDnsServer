@@ -223,13 +223,22 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
             // handle the name pointer
             if (0xC0 == len){ // name pointer
                 unsigned int pos= (unsigned char)(*buff++);
+                unsigned int nmL;
+
                 const char *nmAddr= obuf+pos;
 
                 while (1){
-                    unsigned int nmL= (unsigned char)(*nmAddr++);
+                    nmL= (unsigned char)(*nmAddr++);
+
                     if (0== nmL){
                         break;
                     }
+                    if (0xC0== nmL){
+                        pos= (unsigned char)(*nmAddr++);
+                        nmAddr= obuf+pos;
+                        continue;
+                    }
+
                     if (0!= strlen(resource.rName)){
                         strcat(resource.rName, ".");
                     }
@@ -263,16 +272,19 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
         resource.rdLength= ntohs(*((uint16_t*)buff));
         buff+= sz16;
 
+
         if (MT_A == resource.rType){
             // resource.rData= *((uint32_t*)buff);
             memcpy(resource.rData, buff, sz32);
             inet_ntop(AF_INET, resource.rData, resource.rIp, INET_ADDRSTRLEN);
+
             buff+= sz32;
         }
         else if (MT_AAAA== resource.rType){
             size_t in6_lth= sizeof(struct in6_addr);
             memcpy(resource.rData, buff, in6_lth);
             inet_ntop(AF_INET6, resource.rData, resource.rIp, INET6_ADDRSTRLEN);
+
             buff+= in6_lth;
         }
         else{

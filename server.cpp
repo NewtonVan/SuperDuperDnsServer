@@ -83,13 +83,10 @@ void Server::init(int &port)
 void Server::run(const std::string logNm)
 {
     char rbuf[MAX_UDP_LTH], sbuf[MAX_UDP_LTH];
-    // TODO information function here, so make some change, if something wrong, recover sockaddr to sockaddr_in
     struct sockaddr clientAddr;
     char p_clientAddr[INET6_ADDRSTRLEN];
     socklen_t len= sizeof(struct sockaddr_in);
 
-    // TODO log function
-//    logFile.open(logNm.c_str(), std::ios::app);
     m_resolver.getLog(logNm);
 
     while (true){
@@ -102,7 +99,7 @@ void Server::run(const std::string logNm)
         logFile.open(logNm.c_str(), std::ios::app);
         std::cout<<"******************************************"<<std::endl;
         logFile<<"******************************************"<<std::endl;
-        // TODO information function show received from where
+
         if (AF_INET== clientAddr.sa_family){
             struct sockaddr_in *v4CltAddr= (struct sockaddr_in*)&clientAddr;
             inet_ntop(AF_INET, &(v4CltAddr->sin_addr), p_clientAddr, INET_ADDRSTRLEN);

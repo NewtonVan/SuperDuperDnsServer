@@ -29,7 +29,7 @@ int Response::encode(char *buff)
 std::string Response::to_string()
 {
     std::stringstream stream;
-    char type[10]={0};
+    char type[16]={0};
     stream<<"\nResponse:"<<std::endl;
     stream<<"Status:"<<m_rcode<<std::endl;
 
@@ -38,6 +38,7 @@ std::string Response::to_string()
         MResource resource= *iter;
         get_type(resource.rType, type);
         stream<<resource.rIp<<"\t\t"<<type<<std::endl;
+        memset(type, 0, sizeof(type));
     }
     stream<<"\n";
     return stream.str();
