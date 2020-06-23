@@ -250,8 +250,7 @@ void Message::decode_answers(const char *&buff, const char *&obuf)
             memcpy(resource.rName+strlen(resource.rName), buff, len);
             buff+= len;
         }
-        // TODO check segment fault
-//        printf("segment fault test point 6\n");
+
         resource.rType= ntohs(*((uint16_t*)buff));
         buff+= sz16;
 

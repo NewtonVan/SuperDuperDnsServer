@@ -40,6 +40,7 @@ namespace dns{
         struct Host{
             std::string ipAddr;
             std::string name;
+            int af;
             TicToc tictoc;
         };
 

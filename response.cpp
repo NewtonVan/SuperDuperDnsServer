@@ -37,7 +37,7 @@ std::string Response::to_string()
     m_answers.end()!= iter; ++iter){
         MResource resource= *iter;
         get_type(resource.rType, type);
-        stream<<resource.rIp<<"\r\t\t\t\t"<<type<<std::endl;
+        stream<<resource.rIp<<"\t\t"<<type<<std::endl;
     }
     stream<<"\n";
     return stream.str();

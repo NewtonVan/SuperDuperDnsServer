@@ -15,6 +15,7 @@ void Application::ui(const std::string flname)
     while (getline(paint, pen)){
         std::cout<<pen<<std::endl;
     }
+    paint.close();
 }
 /*
  * simply integrate the functions in the 'server' class

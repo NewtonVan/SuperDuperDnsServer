@@ -49,7 +49,7 @@ std::string ToolMessage::to_string()
          m_answers.end()!= iter; ++iter){
         MResource resource= *iter;
         get_type(resource.rType, type);
-        sstrm<<resource.rIp<<"\r\t\t\t\t"<<type<<std::endl;
+        sstrm<<resource.rIp<<"\t\t"<<type<<std::endl;
     }
     sstrm<<"\n";
     return sstrm.str();

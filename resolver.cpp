@@ -91,10 +91,12 @@ void Resolver::AddCache(char *buff, int lth)
             newCache.name= tIter->rName;
             newCache.ipAddr= tIter->rIp;
             newCache.tictoc.UpdateTic(now, tIter->rTTL);
+            newCache.af= Message::MT_A== tIter->rType ? AF_INET : AF_INET6;
 
             for (vector<Host>::iterator hIter= m_hosts.begin();
             m_hosts.end()!= hIter; ++hIter){
-                if (hIter->ipAddr== newCache.ipAddr && hIter->name== newCache.name){
+                if (hIter->ipAddr== newCache.ipAddr && hIter->name== newCache.name
+                && hIter->af == newCache.af){
                     fnd= 1;
                     if (newCache.tictoc.toc > hIter->tictoc.toc){
                         hIter->tictoc= newCache.tictoc;
@@ -133,7 +135,8 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
 
             // confirm whether the answer is suitable for the question
             // & whether it is a A type query
-            if (question.qName== host.name && question.qType== Message::MT_A){
+            if (question.qName== host.name && Message::MT_A == question.qType
+            && AF_INET == host.af){
                 strcpy(resource.rName, question.qName);
                 resource.rType= question.qType;
                 resource.rClass= question.qClass;
@@ -151,7 +154,8 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
                 hitd= 1;
                 break;
             }
-            else if (question.qName== host.name && question.qType== Message::MT_AAAA){
+            else if (question.qName== host.name && Message::MT_AAAA == question.qType
+            && AF_INET6 == host.af){
                 strcpy(resource.rName, question.qName);
                 resource.rType= question.qType;
                 resource.rClass= question.qClass;

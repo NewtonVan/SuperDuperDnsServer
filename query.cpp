@@ -31,7 +31,7 @@ std::string Query::to_string()
     m_questions.end() != iter; ++iter){
         MQuestion question= *iter;
         get_type(question.qType, type);
-        strm<<question.qName<<"\r\t\t\t\t"<<type<<std::endl;
+        strm<<question.qName<<"\t\t"<<type<<std::endl;
     }
 
     return strm.str();
