@@ -25,7 +25,9 @@ void Resolver::init(const std::string &filename)
         Host host;
         sstrm>>host.ipAddr;
         sstrm>>host.name;
-        host.tictoc.UpdateTic(now, 10);
+        host.af= AF_INET;
+
+        host.tictoc.UpdateTic(now, 600);
         m_hosts.push_back(host);
     }
     fstrm.close();
@@ -60,6 +62,7 @@ void Resolver::TicToc::UpdateTic(unsigned long long ntic, unsigned long long nTT
     TTL= nTTL;
     toc= tic+TTL*CLOCKS_PER_SEC;
 }
+// TODO ans cache
 void Resolver::UpdateCache(void)
 {
     long long now= (long long)clock();
@@ -71,6 +74,16 @@ void Resolver::UpdateCache(void)
         }
         else{
             ++hIter;
+        }
+    }
+
+    for (vector<AnsCache>::iterator cIter= m_ansCache.begin();
+        m_ansCache.end()!= cIter;){
+        if (now> cIter->tictoc.toc){
+            cIter= m_ansCache.erase(cIter);
+        }
+        else{
+            ++cIter;
         }
     }
 }
@@ -111,13 +124,31 @@ void Resolver::AddCache(char *buff, int lth)
                 m_hosts.push_back(newCache);
             }
         }
-/*        else if (Message::MT_CNAME== tIter->rType){
-            Alias newAlias;
-        }*/
     }
-
 }
 
+void Resolver::AddAnsCache(const char *rbuf, const int rlth, const char *sbuf, const int slth)
+{
+    unsigned long long now= clock();
+    AnsCache tmpCache;
+    memcpy(tmpCache.rbuf, rbuf, rlth);
+    tmpCache.rlth= rlth;
+    memcpy(tmpCache.sbuf, sbuf, slth);
+    tmpCache.slth= slth;
+    tmpCache.tictoc.UpdateTic(now, 1800);
+
+    for (vector<AnsCache>::iterator cIter= m_ansCache.begin();
+         m_ansCache.end()!= cIter; ++cIter){
+        if (rlth== cIter->rlth &&
+            (0== memcmp(cIter->rbuf, rbuf, rlth))){
+            if (tmpCache.tictoc.toc > cIter->tictoc.toc){
+                cIter->tictoc= tmpCache.tictoc;
+            }
+            return;
+        }
+    }
+    m_ansCache.push_back(tmpCache);
+}
 /*
  * newest process funtion
  * achieve the proxy function
@@ -125,6 +156,31 @@ void Resolver::AddCache(char *buff, int lth)
  */
 bool Resolver::process(const dns::Query &query, dns::Response &response, const char *rbuf, int &bufLth, char *const sbuf)
 {
+    // TODO ans cache
+    for (vector<AnsCache>::iterator cIter= m_ansCache.begin();
+    m_ansCache.end()!= cIter; ++cIter){
+        if (cIter->rlth== bufLth &&
+            (0== memcmp(cIter->rbuf, rbuf, bufLth))){
+            memset(sbuf, 0, MAX_UDP_LTH);
+            memcpy(sbuf, cIter->sbuf, cIter->slth);
+
+            AddCache(cIter->sbuf, cIter->slth);
+            AddAnsCache(cIter->rbuf, cIter->rlth, cIter->sbuf, cIter->slth);
+            UpdateCache();
+            bufLth= cIter->slth;
+            // TODO ui
+            logFile.open(logName.c_str(), std::ios::app);
+            logData= "Ans Cache was hit\n";
+            cout<<logData;
+            cout<<"******************************************\n\n"<<endl;
+            logFile<<logData<<endl;
+            logFile<<"******************************************\n\n"<<endl;
+            logFile.close();
+
+            return false;
+        }
+    }
+
     response.m_answers.clear();
     response.m_questions.clear();
     int hitd;
@@ -259,6 +315,8 @@ bool Resolver::process(const dns::Query &query, dns::Response &response, const c
 
 
                 AddCache(u_rbuf, numBytes);
+                // TODO add ans cache
+                AddAnsCache(rbuf, bufLth, u_rbuf, numBytes);
                 UpdateCache();
                 bufLth= numBytes;
 

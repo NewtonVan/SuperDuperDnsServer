@@ -43,21 +43,27 @@ namespace dns{
             int af;
             TicToc tictoc;
         };
-/*        struct Alias{
-            std::string name;
-            std::string cname;
+        // TODO ans cache
+        struct AnsCache{
+            char rbuf[MAX_UDP_LTH];
+            char sbuf[MAX_UDP_LTH];
+            int rlth;
+            int slth;
             TicToc tictoc;
-        };*/
+        };
 
         std::vector<Host> m_hosts;
         std::vector<Host> m_UpperDnsServer;
-//        std::vector<Alias> m_alias;
+        // TODO ans cache
+        std::vector<AnsCache> m_ansCache;
+
         int p_socketfd; // p respresent proxy
         std::ofstream logFile;
         std::string logData;
         std::string logName;
 
         void AddCache(char *buff, int lth);
+        void AddAnsCache(const char *rbuf,  const int rlth, const char *sbuf, const int slth);
         void UpdateCache(void);
     };
 }
