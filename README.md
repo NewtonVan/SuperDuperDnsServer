@@ -3,6 +3,13 @@ BigBoss experiment
 
 As for 'Super Duper', thanks to Donald Trump.(doge)
 
+# 配置文件说明
+***
+
+* 静态服务器解析地址，存放在当前目录下的server.cache文件中，信息格式为"Ipv4地址 空格 主机名",例如202.112.14.178 www.uestc.edu.cn
+* 上层服务器解析地址，存放在当前目录下的upperproxy.confg文件中，信息格式同样为"Ipv4地址 空格 主机名",此处，主机名可以随意设置，此处为了方便便随意设置主机名。例子：8.8.8.8  8.8.8.8。
+* 具体配置格式，可以参照以上提到两个文件中存在的信息
+
 # Log
 * version 1.0 achieved some class that may be used in the dns proxy server.
 * version 2.0 fix some bugs, really tiny but dangerous bugs.
